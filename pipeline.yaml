@@ -1,0 +1,65 @@
+trigger: none
+
+pool:
+  vmImage: 'windows-latest'
+
+stages:
+
+- stage: preprod
+  displayName: Enable Diagnostics - preprod
+
+  jobs:
+
+  - deployment: DeployPreProd
+
+    displayName: Deploy To PreProd
+
+    environment: preprod
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: Enable Diagnostics
+
+            inputs:
+              azureSubscription: 'Azure-ServiceConnection'
+              scriptType: ps
+              scriptLocation: scriptPath
+              scriptPath: 'scripts/enable-diagnostics.ps1'
+
+- stage: prodenv
+
+  displayName: Enable Diagnostics - prodenv
+
+  dependsOn: preprod
+
+  condition: succeeded()
+
+  jobs:
+
+  - deployment: DeployProd
+
+    displayName: Deploy To prodenv
+
+    environment: prodenv
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: Enable Diagnostics
+
+            inputs:
+              azureSubscription: 'Azure-ServiceConnection'
+              scriptType: ps
+              scriptLocation: scriptPath
+              scriptPath: 'scripts/enable-diagnostics.ps1'
